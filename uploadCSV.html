@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body{
+            background-color: #62b1d0;
+        }
+        .slidecontainer {
+            width: 100%;
+        }
+      
+        .slider {
+            -webkit-appearance: none;
+            width: 25%;
+            height: 25px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        .viewButton {
+            width: 10%;
+			padding: 10px;
+			background-color: #4CAF50;
+			border: 20;
+			box-sizing: border-box;
+			cursor: pointer;
+			font-weight: bold;
+            color: #ffffff;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+        .fileCss {
+			color: #ffffff; 
+        }
+        .headCss {
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            color: #ffffff;
+        }
+        .logoutButton {
+            text-align:center;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+</head>
+<body>
+    <div id="logout" class="logoutButton"> 
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i>Logout</a>
+    </div>
+    <div id="buttondiv">
+        <input type="file" id="inputfile" class="fileCss" required/>
+        <input type="button" id="viewfile" value="Import file" class="viewButton"/>
+        <input type="button" id="showHistogram" value="See Histogram" class="viewButton" />
+        <br><br>
+    </div>
+    
+    <div id="histogramPart">
+        <div class="container" id="container">
+            <table class="gridtable" id="tableMain">
+            </table>
+        </div><h1 class="headCss">Choose cutoff</h1>
+        <p class="headCss">Drag the slider to choose the grade cutoffs.</p>
+
+        <div class="slidecontainer">
+        <input type="range" min="1" max="10" value="5" class="slider" id="myRange" step="1">
+        <p class="headCss">Cutoff Value: <span id="demo"></span></p>
+        </div>
+
+        <p id="level"></p>
+        
+        <h1 class="headCss">Grade Histogram</h1>
+        <svg id="svg" width="600" height="300"></svg>
+        <script src="d3.min.js"></script>
+
+        <p id="detail"></p>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            let grades = [];
+            //histogram part hide initially
+            $('#showHistogram').hide();
+            $('#histogramPart').hide();
+
+            ////////
+            $('#logoutButton').click(function(){
+                console.log("hi");
+            });
+            //upload file
+            $('#viewfile').click(function(){
+                var rdr = new FileReader();
+                var newrow = "";
+                var lastLine = 0;
+                var finalPercentage = 0;
+                var finalGrades = [];
+
+                rdr.onload = function(e) {
+                    //get the rows into an array
+                    var therows = e.target.result.split("\n"); 
+                    console.log(therows);
+                    
+                    lastLine = therows.length - 1;
+                    var totalElement = therows[lastLine].split(",");
+
+                    var a = parseInt(totalElement[1]);
+                    var b = parseInt(totalElement[2]);
+                    var c = parseInt(totalElement[3]);
+
+                    var aPercentage = a/100;
+                    var bPercentage = b/100;
+                    var cPercentage = c/100;                
+                    
+                    var sum = a + b + c;
+                    //console.log(sum);
+                    if(sum != 100) {
+                        alert("Wrong file upload. Please check the file type or whether the sum of total grade equal to 100. Please upload another file.");
+                    }
+                    else {
+                        $('#histogramPart').show();
+                        $('#showHistogram').show();
+                        //show table
+                        //loop through the rows  
+                        for(var row=0; row<therows.length; row++) {
+                            //get the columns into an array
+                            var columns = therows[row].split(",");
+                            var colcount = columns.length;
+                            if(colcount != 4) {
+                                newrow = "<tr><td>Incorrect number of columns.</td><td></td><td></td><td></td></tr>"
+                            }
+                            else {
+                                newrow = "<tr><td>" + columns[0] + "</td><td>" + columns[1] + "</td><td>" + columns[2] + "</td><td>" + columns[3] + "</td>";
+                            }
+                            $('#tableMain').append(newrow);
+                        }
+
+                        //object
+                        for(var j=1; j<therows.length-1; j++) {
+                            var cols = therows[j].split(",");
+                            var colsNum = cols.length
+
+                            if(colsNum != 4) {
+                                console.log("Wrong grade information.");
+                            }
+                            else {
+                                //student info + final grades
+                                let grade = {
+                                    studentID : cols[0],
+                                    quiz : cols[1],
+                                    midterm : cols[2],
+                                    final : cols[3],
+                                    finalPercentage : (aPercentage * cols[1] + bPercentage * cols[2] + cPercentage * cols[3]).toFixed(2)
+                                }
+                                grades.push(grade);
+                            }
+                        }
+                        console.log(grades);
+                    }
+                }
+                rdr.readAsText($("#inputfile")[0].files[0]);       
+            });
+
+            $('#showHistogram').click(function(){
+                //parse grades to histogram page
+                localStorage.setItem('test', JSON.stringify(grades));
+                //jump to histogram page
+                window.open('./histogram')
+
+
+                ///////////////////
+                //choose the cutoff
+                var slider = document.getElementById("myRange");
+                var currentCutoff = document.getElementById("demo");
+                var cutoffValue = 5;    //initial cutoff value is 5
+                var qtyList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                currentCutoff.innerHTML = slider.value;
+                var upperList = [];
+                var lowerList = [];
+                var levelList = [];
+                var detailList = [];
+                var letterGradeList = [];
+                var test = [];
+
+                //pass grades from upload pages
+                var finalGrades = JSON.parse(localStorage.getItem('test'));
+
+                var gradeData = [
+                    {Grade:'A+',Qty:0},
+                    {Grade:'A',Qty:0},
+                    {Grade:'A-',Qty:0},
+                    {Grade:'B+',Qty:0},
+                    {Grade:'B',Qty:0},
+                    {Grade:'B-',Qty:0},
+                    {Grade:'C+',Qty:0},
+                    {Grade:'C',Qty:0},
+                    {Grade:'C-',Qty:0},
+                    {Grade:'D',Qty:0},
+                    {Grade:'F',Qty:0}
+                ];
+
+                //change cutoff
+                slider.oninput = function() {
+                    console.log(gradeData);
+                    currentCutoff.innerHTML = this.value;
+                    cutoffValue = currentCutoff.innerHTML;  //update immediately
+                    //upper list: 100, 95, 90, 85
+                    makeChart();
+                    showLevel();
+                    showDetails();
+                    console.log(gradeData);
+                    console.log(gradeData);
+                }
+
+                function makeChart(){
+                    for(let k=0;k<11;k++) {
+                        upperList[k] = 100 -  k * cutoffValue;
+                        lowerList[k] = 100 - (k + 1) * cutoffValue;
+
+                        //loop objects to final qty of each level
+                        for(let i=0;i<finalGrades.length;i++) {
+                            if(finalGrades[i].finalPercentage > lowerList[k] && finalGrades[i].finalPercentage < upperList[k]) {
+                                gradeData[k].Qty++;
+                                letterGradeList[i] = gradeData[k].Grade;
+                            }
+                            //F situation
+                            if(finalGrades[i].finalPercentage < lowerList[10]) {
+                                gradeData[10].Qty++;
+                                letterGradeList[i] = gradeData[k].Grade;2
+                            }
+                        }
+                    }
+
+                    var svg = d3.select("#svg");
+
+                    var padding = {top:20,right:30,bottom:30,left:50};
+
+                    var color = d3.hcl(-97, 32, 52);
+
+                    var chartArea = {
+                        "width":parseInt(svg.style("width")) - padding.left - padding.right,
+                        "height":parseInt(svg.style("height")) - padding.top - padding.bottom
+                    };
+
+                    var yScale = d3.scaleLinear()
+                        .domain([0,d3.max(gradeData, function(d){return d.Qty})])
+                        .range([chartArea.height,0]).nice();
+
+                    var xScale = d3.scaleBand()
+                        .domain(gradeData.map(function(d){return d.Grade}))
+                        .range([0,chartArea.width])
+                        .padding(.2);
+
+                    //xAxis
+                    var xAxis = svg.append("g")
+                        .classed("xAxis",true)
+                        .attr(
+                            'transform','translate('+padding.left+','+(chartArea.height+padding.top)+')'
+                        )
+                        .call(d3.axisBottom(xScale));
+
+                    //yAxis
+                    var yAxisFn = d3.axisLeft(yScale);
+                    var yAxis = svg.append("g")
+                        .classed("yAxis",true)
+                        .attr(
+                            'transform','translate('+padding.left+','+padding.top+')'
+                        );
+                    yAxisFn(yAxis);
+
+                    //bars
+                    var rectGrp = svg.append("g").attr(
+                        'transform','translate('+padding.left+','+padding.top+')'
+                    );
+
+                    rectGrp.selectAll("rect").data(gradeData).enter()
+                        .append("rect")
+                        .attr("width",xScale.bandwidth())
+                        .attr("height",function(d){
+                            return chartArea.height-yScale(d.Qty);
+                        })
+                        .attr("x",function(d){
+                            return xScale(d.Grade);
+                        })
+                        .attr("y",function(d){
+                            return yScale(d.Qty);
+                        })
+                        
+                        .attr("fill",function(d){
+                            return color;
+                        });  
+                }
+
+                function showLevel() {
+                    for(let n=0;n<10;n++) {
+                        levelList[n] = gradeData[n].Grade + ": " +lowerList[n] + " - " + upperList[n];
+                    }
+                    levelList[10] = gradeData[10].Grade + ": " + "Under " + upperList[10];
+                    document.getElementById("level").innerHTML = levelList;
+                }
+
+                function showDetails() {
+                    for(let a=0;a<finalGrades.length;a++) {
+                        detailList[a] = "#" + finalGrades[a].studentID + ": Quiz: " + finalGrades[a].quiz + ", Midterm: " + finalGrades[a].midterm
+                                        + ", Final: " + finalGrades[a].final + ", Final Percentage: " + finalGrades[a].finalPercentage + ", Letter Grade: " + letterGradeList[a];
+                    }
+                    document.getElementById("detail").innerHTML = detailList;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="css.css">
+    <style>
+      body{
+            background-color: #62b1d0;
+      }
+      #chart-wrap{ 
+        width:910px; 
+        height:240px;
+        border:solid 1px #B3B3DC;
+        position:relative; 
+        top:40px; 
+        left:20px;
+      } 
+    </style>
+</head>
+<body>
+    <input type="number" placeholder="Cutoff Value" id="cutoffValue"><br>
+    <input type="button" onclick="renderChart(qtyList); showDetails(); showLevel() " id="selectCutoff" value="Show / Updates" />
+    <h1>Grade Histogram</h1>
+    <p id="level"></p>
+    <div id="chart-wrap"></div>
+    <br><br><br>
+    <p id="detail"></p>
+    <script>
+    function renderChart(qtyList) {
+        var cutoffValue = document.getElementById("cutoffValue").value;
+        for(let k=0;k<11;k++) {
+            upperList[k] = 100 -  k * cutoffValue;
+            lowerList[k] = 100 - (k + 1) * cutoffValue;
+
+            //loop objects to final qty of each level
+            for(let i=0;i<finalGrades.length;i++) {
+                if(finalGrades[i].finalPercentage > lowerList[k] && finalGrades[i].finalPercentage < upperList[k]) {
+                    qtyList[k]++;
+                    letterGradeList[i] = levelList[k];
+                }
+                //F situation
+                if(finalGrades[i].finalPercentage < lowerList[10]) {
+                    //qtyList[k]++;
+                    //letterGradeList[i] = levelList[k];
+                }
+            }
+        }
+
+        var cw = document.getElementById("chart-wrap"); 
+        cw.innerHTML = ""; 
+        var max = 0; 
+        for (var index in qtyList) {
+          if (qtyList[index] > max)
+            max = qtyList[index];
+        }
+        var percent = 180 / max; 
+
+        var i = 0;
+        for (var index in qtyList) { 
+          var bar = document.createElement("div"); 
+          bar.id = index + "_" + qtyList[index]; 
+
+          console.log(bar.id);
+
+          bar.style.height = Math.round(percent * qtyList[index]) + "px"; 
+          bar.style.width = "40px";
+          bar.style.left = (i * 40) + 165 + "px"; 
+          bar.style.marginLeft = (i * 20) + "px"; 
+          bar.style.position = "absolute"; 
+          bar.style.background = "none repeat scroll 0 0 pink";
+          bar.style.overflow = "hidden";
+          bar.setAttribute("title", index + "：" + qtyList[index]);
+          bar.style.display = "block"; 
+          bar.style.top = 200 - Math.round(percent * qtyList[index]) + "px"; 
+          cw.appendChild(bar); 
+          var axis = document.createElement("div"); 
+          axis.id = "axis_" + i; 
+
+          console.log(axis.id);
+
+          axis.style.width = "40px"; 
+          axis.style.left = (i * 40) + 165 + "px"; 
+          axis.style.marginLeft = (i * 20) + "px";
+          axis.style.textAlign = "center"; 
+          axis.style.position = "absolute"; 
+          axis.style.top = "205px"; 
+          axis.innerHTML = '<span style="font-size:12px; color:grey;"> ' + levelList[i] + '</span>'; 
+          cw.appendChild(axis); 
+          i++;
+        }   
+        for (var i = 0; i < 5; i++) { 
+          var ayis = document.createElement("div"); 
+          ayis.style.width = "30px"; 
+          ayis.style.position = "absolute"; 
+          ayis.style.top = (36 * i) + (20 - 6) + "px"; 
+          ayis.style.left = "140px"; 
+          ayis.innerHTML = '<span style="font-size:12px; color:grey;"> ' + Math.round(max - (max / 5) * i) + '</span>'; 
+          cw.appendChild(ayis); 
+          var line = document.createElement("div"); 
+          line.setAttribute("style", "width:580px; left:165px; border-top:1px dotted grey; height:1px; line-height:1px; display:block; overflow:hidden; position:absolute; "); 
+          line.style.top = (36 * i) + 20 + "px"; 
+          //y line
+          //cw.appendChild(line); 
+        } 
+      }
+    var upperList = [];
+    var lowerList = [];
+    var levels = [];
+    var detailList = [];
+    var letterGradeList = [];
+    var test = [];
+    var qtyList = [0,0,0,0,0,0,0,0,0,0,0];
+    var levelList = ['A+','A','A-','B+','B','B-','C+','C','C-','D','F'];
+    var finalGrades = JSON.parse(localStorage.getItem('test'));
+    renderChart(qtyList);
+
+    function showLevel() {
+      for(let n=0;n<10;n++) {
+          levels[n] = levelList[n] + ": " +lowerList[n] + " - " + upperList[n];
+      }
+      levels[10] = levelList[10] + ": " + "Under " + upperList[10];
+      document.getElementById("level").innerHTML = levels;
+    }
+
+    function showDetails() {
+      for(let a=0;a<finalGrades.length;a++) {
+          detailList[a] = "#" + finalGrades[a].studentID + ": Quiz: " + finalGrades[a].quiz + ", Midterm: " + finalGrades[a].midterm
+                          + ", Final: " + finalGrades[a].final + ", Final Percentage: " + finalGrades[a].finalPercentage + ", Letter Grade: " + letterGradeList[a];
+      }
+      document.getElementById("detail").innerHTML = detailList;
+    }
+    </script>
+</body>
+</html>
