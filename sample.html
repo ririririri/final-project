@@ -16,20 +16,52 @@
         top:40px; 
         left:20px;
       } 
+      .logoutButton {
+            text-align:center;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+      }
+      .headCss {
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            color: #ffffff;
+      }
+      .showButton {
+            width: 10%;
+            padding: 10px;
+            background-color: #4CAF50;
+            border: 20;
+            box-sizing: border-box;
+            cursor: pointer;
+            font-weight: bold;
+            color: #ffffff;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
     </style>
 </head>
 <body>
+    <p class="headCss">Please refresh the page to change cutoff to see new histogram.</p>
+    <div id="logout" class="logoutButton"> 
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i>Logout</a>
+    </div>
     <input type="number" placeholder="Cutoff Value" id="cutoffValue"><br>
-    <input type="button" onclick="renderChart(qtyList); showDetails(); showLevel() " id="selectCutoff" value="Show / Updates" />
-    <h1>Grade Histogram</h1>
+    <input type="button" class="showButton" onclick="drawChart(qtyList); showDetails(); showLevel() " id="selectCutoff" value="Show Histogram" />
+    <h1 class="headCss">Grade Histogram</h1>
     <p id="level"></p>
     <div id="chart-wrap"></div>
     <br><br><br>
     <p id="detail"></p>
     <script>
-    function renderChart(qtyList) {
+    function drawChart(qtyList) {
+      //var validInput = true;
+        //document.getElementById("cuttoffValue").defaultValue = "5";
         var cutoffValue = document.getElementById("cutoffValue").value;
-        for(let k=0;k<11;k++) {
+        if(cutoffValue <= 0 || cutoffValue > 10){
+          alert("The cutoff value should between 0 to 10.");
+          //validInput = false;
+        }
+        else {
+          for(let k=0;k<11;k++) {
             upperList[k] = 100 -  k * cutoffValue;
             lowerList[k] = 100 - (k + 1) * cutoffValue;
 
@@ -41,8 +73,8 @@
                 }
                 //F situation
                 if(finalGrades[i].finalPercentage < lowerList[10]) {
-                    //qtyList[k]++;
-                    //letterGradeList[i] = levelList[k];
+                    qtyList[k]++;
+                    letterGradeList[i] = levelList[k];
                 }
             }
         }
@@ -85,25 +117,26 @@
           axis.style.textAlign = "center"; 
           axis.style.position = "absolute"; 
           axis.style.top = "205px"; 
-          axis.innerHTML = '<span style="font-size:12px; color:grey;"> ' + levelList[i] + '</span>'; 
+          axis.innerHTML = '<span style="font-size:13px; color:white;"> ' + levelList[i] + '</span>'; 
           cw.appendChild(axis); 
           i++;
         }   
-        for (var i = 0; i < 5; i++) { 
+        for (var i = 0; i < max; i++) { 
           var ayis = document.createElement("div"); 
           ayis.style.width = "30px"; 
           ayis.style.position = "absolute"; 
           ayis.style.top = (36 * i) + (20 - 6) + "px"; 
           ayis.style.left = "140px"; 
-          ayis.innerHTML = '<span style="font-size:12px; color:grey;"> ' + Math.round(max - (max / 5) * i) + '</span>'; 
+          ayis.innerHTML = '<span style="font-size:13px; color:white;"> ' + (max - i) + '</span>'; 
+          
           cw.appendChild(ayis); 
           var line = document.createElement("div"); 
           line.setAttribute("style", "width:580px; left:165px; border-top:1px dotted grey; height:1px; line-height:1px; display:block; overflow:hidden; position:absolute; "); 
           line.style.top = (36 * i) + 20 + "px"; 
-          //y line
-          //cw.appendChild(line); 
         } 
       }
+    }
+        
     var upperList = [];
     var lowerList = [];
     var levels = [];
@@ -113,9 +146,10 @@
     var qtyList = [0,0,0,0,0,0,0,0,0,0,0];
     var levelList = ['A+','A','A-','B+','B','B-','C+','C','C-','D','F'];
     var finalGrades = JSON.parse(localStorage.getItem('test'));
-    renderChart(qtyList);
+    drawChart(qtyList);
 
     function showLevel() {
+
       for(let n=0;n<10;n++) {
           levels[n] = levelList[n] + ": " +lowerList[n] + " - " + upperList[n];
       }
@@ -124,12 +158,15 @@
     }
 
     function showDetails() {
+      
       for(let a=0;a<finalGrades.length;a++) {
-          detailList[a] = "#" + finalGrades[a].studentID + ": Quiz: " + finalGrades[a].quiz + ", Midterm: " + finalGrades[a].midterm
+          var num = a + 1;
+          detailList[a] = "Student No." + num + "-StudentID: " + finalGrades[a].studentID + ": Quiz: " + finalGrades[a].quiz + ", Midterm: " + finalGrades[a].midterm
                           + ", Final: " + finalGrades[a].final + ", Final Percentage: " + finalGrades[a].finalPercentage + ", Letter Grade: " + letterGradeList[a];
       }
       document.getElementById("detail").innerHTML = detailList;
-    }
+      
+  }
     </script>
 </body>
 </html>
