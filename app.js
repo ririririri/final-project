@@ -83,7 +83,7 @@ app.get('/uploadCSV', function(request, response) {
 
 
 app.get('/histogram', function(request, response) {
-    response.sendFile(path.join(__dirname + '/sample.html'))
+    response.sendFile(path.join(__dirname + '/histogram.html'))
 });
 
 app.get('/logout', function(request, response) {
